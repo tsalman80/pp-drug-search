@@ -20,7 +20,6 @@ A web application for searching drug information, including indications, ICD-10 
 1. Clone the repository:
 ```bash
 git clone https://github.com/tsalman80/pp-drug-search.git
-cd <repository-name>
 ```
 
 2. Create and activate a virtual environment:
