@@ -1,0 +1,36 @@
+# Ignore all files in the python-env directory
+python-env/
+
+# Ignore all files in the venv directory
+venv/
+
+#ignore all python temp files
+*.pyc
+
+#ignore all pycache files
+__pycache__/
+
+#ignore all logs files
+logs/
+
+#ignore all .cursorrules files
+.cursorrules
+
+#ignore all .vscode files
+.vscode/
+
+#ignore all .env files
+.env
+
+.venv
+
+.idea
+
+.pytest_cache
+
+
+.streamlit/secrets.toml
+
+drug_indications.db
+
+logs/
