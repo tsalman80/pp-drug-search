@@ -196,7 +196,7 @@ class ICD10Mapper:
                     term_doc = self.nlp(term)
                     if term_doc.vector_norm:
                         similarity = doc.similarity(term_doc)
-                        if similarity > 0.7:  # Threshold for semantic similarity
+                        if similarity > 0.8:  # Threshold for semantic similarity
                             synonyms.update(self.synonym_lookup[term])
         except Exception as e:
             logger.warning(f"Error getting semantic synonyms for {text}: {str(e)}")
@@ -303,7 +303,7 @@ class ICD10Mapper:
     def map_indication(self, indication: str) -> List[Dict]:
         """Map a list of indications to ICD-10 codes."""
         matches = self.get_icd10_matches_above_threshold(
-            indication, threshold=0.3, max_matches=10
+            indication, threshold=0.5, max_matches=10
         )
 
         if len(matches) == 0:

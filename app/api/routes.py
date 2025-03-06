@@ -50,7 +50,7 @@ async def get_drug_indication_mappings(
                         for icd10 in sorted(
                             drug.indication.icd10_codes,
                             key=lambda x: x.confidence_score,
-                            reverse=True
+                            reverse=True,
                         )
                     ],
                 },
@@ -134,7 +134,7 @@ async def get_drug_indication_mappings(
                     for icd10 in sorted(
                         indication.icd10_codes,
                         key=lambda x: x.confidence_score,
-                        reverse=True
+                        reverse=True,
                     )
                 ],
             },
