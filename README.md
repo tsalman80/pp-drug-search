@@ -19,8 +19,7 @@ A web application for searching drug information, including indications, ICD-10 
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/tsalman80/pp-drug-search.git
 ```
 
 2. Create and activate a virtual environment:
@@ -46,7 +45,7 @@ This will download:
 
 1. Start the FastAPI backend:
 ```bash
-uvicorn app.main:app --reload
+bash run.sh or ./run.sh
 ```
 
 2. In a new terminal, start the Streamlit frontend:
