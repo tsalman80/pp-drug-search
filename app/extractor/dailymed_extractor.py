@@ -118,7 +118,7 @@ class DailyMedExtractor:
 
             # Remove duplicates while preserving order
             seen = set()
-            return " ".join([x for x in indications if not (x in seen or seen.add(x))])
+            return [x for x in indications if not (x in seen or seen.add(x))]
         except Exception as e:
             logger.error(f"Error extracting indications: {str(e)}")
             return None

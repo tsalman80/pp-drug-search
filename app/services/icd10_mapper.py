@@ -315,3 +315,23 @@ class ICD10Mapper:
         }
 
         return mapped_indication
+
+    def map_indications(self, indications: List[str]) -> Dict:
+        """Map a list of indications to ICD-10 codes."""
+        results = []
+        for indication in indications:
+            result = self.map_indication(indication)
+            if result and "matches" in result:
+                results.extend(result["matches"])
+
+        indication = " ".join(indications)
+
+        # Get top 2 highest confidence scores
+        top_matches = np.argsort([match["confidence_score"] for match in results])[-5:][
+            ::-1
+        ]
+
+        return {
+            "original_text": indication,
+            "matches": [results[i] for i in top_matches],
+        }

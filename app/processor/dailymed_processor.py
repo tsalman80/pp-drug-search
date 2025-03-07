@@ -55,13 +55,14 @@ class DailyMedProcessor:
                     }
 
                 # Extract indications and directions using the extractor
-                indication = self.extractor.extract_indication(xml_content)
+                indications = self.extractor.extract_indication(xml_content)
                 directions = self.extractor.extract_directions(xml_content)
 
                 return {
                     "drug": drug_name,
                     "set_id": set_id,
-                    "indication": indication,
+                    "indications": indications,
+                    "indication": " ".join(indications),
                     "directions": directions,
                     "error": None,
                 }

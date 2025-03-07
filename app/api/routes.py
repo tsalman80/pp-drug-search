@@ -33,29 +33,29 @@ async def get_drug_indication_mappings(
 ) -> Dict:
     """Get indication, directions and ICD-10 mappings for a drug."""
     try:
-        # Check if drug exists in database
-        drug = db.query(Drug).filter(Drug.name == drug_name).first()
-        if drug and drug.indication:
-            # Return cached results
-            return {
-                "drug": drug_name,
-                "indication": {
-                    "original_text": drug.indication.description,
-                    "icd10_codes": [
-                        {
-                            "code": icd10.code,
-                            "description": icd10.description,
-                            "confidence_score": icd10.confidence_score,
-                        }
-                        for icd10 in sorted(
-                            drug.indication.icd10_codes,
-                            key=lambda x: x.confidence_score,
-                            reverse=True,
-                        )
-                    ],
-                },
-                "directions": drug.directions.description if drug.directions else None,
-            }
+        # # Check if drug exists in database
+        # drug = db.query(Drug).filter(Drug.name == drug_name).first()
+        # if drug and drug.indication:
+        #     # Return cached results
+        #     return {
+        #         "drug": drug_name,
+        #         "indication": {
+        #             "original_text": drug.indication.description,
+        #             "icd10_codes": [
+        #                 {
+        #                     "code": icd10.code,
+        #                     "description": icd10.description,
+        #                     "confidence_score": icd10.confidence_score,
+        #                 }
+        #                 for icd10 in sorted(
+        #                     drug.indication.icd10_codes,
+        #                     key=lambda x: x.confidence_score,
+        #                     reverse=True,
+        #                 )
+        #             ],
+        #         },
+        #         "directions": drug.directions.description if drug.directions else None,
+        #     }
 
         # Fetch new data from DailyMed using the processor
         processor = DailyMedProcessor()
@@ -65,84 +65,71 @@ async def get_drug_indication_mappings(
             raise HTTPException(status_code=404, detail=drug_data["error"])
 
         # Map indication to ICD-10 codes
-        mapped_indication = ICD10Mapper().map_indication(drug_data["indication"])
+        mapped_indication = ICD10Mapper().map_indications(drug_data["indications"])
 
-        # Update existing drug or create new one
-        if drug:
-            # Update existing drug's set_id and clear old indication and directions
-            drug.set_id = drug_data["set_id"]
-            if drug.indication:
-                db.delete(drug.indication)
-            if drug.directions:
-                db.delete(drug.directions)
-        else:
-            # Create new drug
-            drug = Drug(name=drug_name, set_id=drug_data["set_id"])
-            db.add(drug)
+        # # Update existing drug or create new one
+        # if drug:
+        #     # Update existing drug's set_id and clear old indication and directions
+        #     drug.set_id = drug_data["set_id"]
+        #     if drug.indication:
+        #         db.delete(drug.indication)
+        #     if drug.directions:
+        #         db.delete(drug.directions)
+        # else:
+        #     # Create new drug
+        #     drug = Drug(name=drug_name, set_id=drug_data["set_id"])
+        #     db.add(drug)
 
-        # Create new indication with its ICD-10 codes
-        indication = Indication(
-            description=mapped_indication["original_text"],
-            drug_id=drug.id,
-        )
-        db.add(indication)
+        # # Create new indication with its ICD-10 codes
+        # indication = Indication(
+        #     description=mapped_indication["original_text"],
+        #     drug_id=drug.id,
+        # )
+        # db.add(indication)
 
         # Create new directions if available
-        if drug_data.get("directions"):
-            directions = Directions(
-                description=drug_data["directions"],
-                drug_id=drug.id,
-            )
-            db.add(directions)
+        # if drug_data.get("directions"):
+        #     directions = Directions(
+        #         description=drug_data["directions"],
+        #         drug_id=drug.id,
+        #     )
+        #     db.add(directions)
 
-        db.flush()  # Flush to get the indication.id
+        # db.flush()  # Flush to get the indication.id
 
         # Add ICD-10 codes
-        for mapped_icd10 in mapped_indication["matches"]:
-            # Create or get ICD10Code
-            icd10_code = (
-                db.query(ICD10Code)
-                .filter(ICD10Code.code == mapped_icd10["icd10_code"])
-                .first()
-            )
+        # for indication in mapped_indications:
+        # Create or get ICD10Code
+        # icd10_code = (
+        #     db.query(ICD10Code)
+        #     .filter(ICD10Code.code == mapped_icd10["icd10_code"])
+        #     .first()
+        # )
 
-            if icd10_code is None:
-                icd10_code = ICD10Code(
-                    code=mapped_icd10["icd10_code"],
-                    description=mapped_icd10["icd10_description"],
-                    category=mapped_icd10["icd10_category"],
-                    confidence_score=mapped_icd10["confidence_score"],
-                )
-                db.add(icd10_code)
-                db.flush()  # Flush to get the icd10_code.id
+        # if icd10_code is None:
+        #     icd10_code = ICD10Code(
+        #         code=mapped_icd10["icd10_code"],
+        #         description=mapped_icd10["icd10_description"],
+        #         category=mapped_icd10["icd10_category"],
+        #         confidence_score=mapped_icd10["confidence_score"],
+        #     )
+        #     db.add(icd10_code)
+        #     db.flush()  # Flush to get the icd10_code.id
 
-            indication.icd10_codes.append(icd10_code)
+        # indication.icd10_codes.append(icd10_code)
 
-        db.commit()
+        # db.commit()
 
         return {
             "drug": drug_name,
             "indication": {
-                "original_text": indication.description,
-                "icd10_codes": [
-                    {
-                        "code": icd10.code,
-                        "description": icd10.description,
-                        "category": icd10.category,
-                        "confidence_score": icd10.confidence_score,
-                    }
-                    for icd10 in sorted(
-                        indication.icd10_codes,
-                        key=lambda x: x.confidence_score,
-                        reverse=True,
-                    )
-                ],
+                "original_text": mapped_indication["original_text"],
+                "icd10_codes": sorted(
+                    mapped_indication["matches"],
+                    key=lambda x: x["confidence_score"],
+                    reverse=True,
+                ),
             },
-            "directions": (
-                directions.description
-                if directions.description
-                else drug_data["directions"]
-            ),
         }
 
     except Exception as e:
