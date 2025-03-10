@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict
+from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from ..services.dailymed_service import DailyMedService
 from ..processor.dailymed_processor import DailyMedProcessor
@@ -7,10 +7,18 @@ from ..services.icd10_mapper import ICD10Mapper
 from ..database.models import Drug, Indication, ICD10Code, Directions
 from ..core.config import get_settings
 import logging
+from pydantic import BaseModel
+
+from app.services.llm_service import VectorStoreService
+from app.services.pdf_service import pdf_service
+from app.services.dailymed_service import DailyMedService
 
 router = APIRouter()
 settings = get_settings()
 logger = logging.getLogger(__name__)
+processor = DailyMedProcessor()
+dailymed_service = DailyMedService()
+vector_store_manager = VectorStoreService()
 
 
 def get_db():
@@ -58,7 +66,7 @@ async def get_drug_indication_mappings(
         #     }
 
         # Fetch new data from DailyMed using the processor
-        processor = DailyMedProcessor()
+
         drug_data = await processor.get_drug_indications(drug_name)
 
         if "error" in drug_data and drug_data["error"] is not None:
@@ -203,3 +211,62 @@ async def search_drug(drug_name: str) -> List[Dict]:
     except Exception as e:
         logger.error(f"Error searching drug {drug_name}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching drug: {str(e)}")
+
+
+class ICD10Code(BaseModel):
+    icd10_code: str
+    description: str
+    category: str
+    subcategory: str
+    score: float
+
+
+class SearchResponse(BaseModel):
+    drug_name: str
+    indication: str
+    icd10_codes: list[ICD10Code]
+
+
+@router.get("/drugs/semantic-search/{drug_name}", response_model=List[SearchResponse])
+async def search_icd10_by_drug(drug_name: str) -> List[SearchResponse]:
+    """
+    Search for ICD-10 codes semantically related to a drug's indications.
+    """
+
+    try:
+        # Get drug setid
+        async with dailymed_service as service:
+            spl = await service.get_spl_info(drug_name)
+            if not spl:
+                raise HTTPException(
+                    status_code=404, detail=f"Drug {drug_name} not found"
+                )
+
+            setid = spl["setid"]
+
+            # Get indications from PDF
+            indications = await pdf_service.process_drug_pdf(setid)
+            if not indications:
+                raise HTTPException(
+                    status_code=404, detail=f"No indications found for {drug_name}"
+                )
+
+            # Search vector store for related ICD-10 codes
+            results = []
+            for indication in indications:
+                results.append(
+                    SearchResponse(
+                        drug_name=drug_name,
+                        indication=indication,
+                        icd10_codes=sorted(
+                            vector_store_manager.search_icd10_codes(indication),
+                            key=lambda x: x["score"],
+                            reverse=True,
+                        ),
+                    )
+                )
+
+            return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

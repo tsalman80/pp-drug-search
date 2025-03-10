@@ -22,6 +22,24 @@ class Settings(BaseSettings):
     # Cache settings
     CACHE_EXPIRATION: int = 3600  # 1 hour
 
+    # Vector Store
+    CHROMA_PERSIST_DIR: str = "data/chroma_db"
+    COLLECTION_NAME: str = "icd10_descriptions"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "medllama2"
+    OLLAMA_EMBEDDING_MODEL: str = "nomic-embed-text"
+    OLLAMA_SYSTEM_PROMPT: str = """
+    You are an expert medical expert who can identify icd 10 codes from a description which is a medical condition.     
+    """
+
+    OPENAI_API_KEY: str = None
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    HUGGINGFACE_EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
+    # "sentence-transformers/all-MiniLM-L6-v2"
+    # = "BAAI/bge-small-en-v1.5"
+
+    # "abhinand/MedEmbed-base-v0.1"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

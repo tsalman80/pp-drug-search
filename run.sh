@@ -23,7 +23,7 @@ fi
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
     echo -e "${YELLOW}Creating virtual environment...${NC}"
-    python3 -m venv .venv
+    python3.9 -m venv .venv
 fi
 
 # Activate virtual environment
@@ -48,9 +48,9 @@ if [ -f "drug_indications.db" ]; then
 fi
 
 
-# Setup the application
-echo -e "${YELLOW}Setting up the application...${NC}"
-python scripts/setup.py
+# # Setup the application
+# echo -e "${YELLOW}Setting up the application...${NC}"
+# python scripts/setup.py
 
 # Run the application with proper error handling
 echo -e "${GREEN}Starting the application...${NC}"

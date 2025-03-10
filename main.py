@@ -1,3 +1,4 @@
+import asyncio
 import os
 from fastapi import FastAPI
 from app.api.routes import router
@@ -8,6 +9,7 @@ from tqdm import tqdm
 
 from app.data.icd10_data_loader import load_icd10_codes_from_csv
 from app.database.models import init_db
+from app.data.icd10_vector_store_loader import init_vector_store
 
 # Setup logging
 logger = setup_logging()
@@ -20,6 +22,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url=f"{settings.API_V1_STR}/docs",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    timeout=60,
 )
 
 
@@ -39,30 +42,34 @@ async def shutdown_event():
 # Initialize database and load data
 init_db(settings.SQLITE_URL)
 
-# Create progress bars
-icd10_pbar = tqdm(total=100, desc="Loading ICD-10 codes", unit="%")
+# # Create progress bars
+# icd10_pbar = tqdm(total=100, desc="Loading ICD-10 codes", unit="%")
 
 
-# Update progress callback functions
-def update_icd10_progress(progress):
-    icd10_pbar.n = progress
-    icd10_pbar.refresh()
+# # Update progress callback functions
+# def update_icd10_progress(progress):
+#     icd10_pbar.n = progress
+#     icd10_pbar.refresh()
 
 
-# Load data with progress bars
-load_icd10_codes_from_csv(
-    settings.SQLITE_URL,
-    settings.ICD10_CODES_CSV_PATH,
-    progress_callback=update_icd10_progress,
-)
+# # Load data with progress bars
+# load_icd10_codes_from_csv(
+#     settings.SQLITE_URL,
+#     settings.ICD10_CODES_CSV_PATH,
+#     progress_callback=update_icd10_progress,
+# )
 
+# # Close progress bars
+# icd10_pbar.close()
 
-# Close progress bars
-icd10_pbar.close()
+# # Initialize vector store
+# init_vector_store()
 
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
 if __name__ == "__main__":
     logger.info("Starting server...")
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True, log_level="info")
+    uvicorn.run(
+        "main:app", host="127.0.0.1", port=8000, reload=False, log_level="warning"
+    )

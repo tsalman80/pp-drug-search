@@ -31,6 +31,9 @@ logs/
 
 .streamlit/secrets.toml
 
-drug_indications.db
-
 logs/
+
+data/chroma_db/
+data/pdfs/
+data/drug_indications.db
+
